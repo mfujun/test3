@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手写签名生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 900px;
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .signature-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            min-width: 300px;
+            border: 2px dashed #bdc3c7;
+            border-radius: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        
+        #signatureCanvas {
+            width: 100%;
+            height: 250px;
+            background-color: white;
+            border-radius: 5px;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        
+        .controls {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .control-group {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .control-group h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .brush-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .brush-option {
+            padding: 8px 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .brush-option.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .color-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #ddd;
+            transition: transform 0.2s;
+        }
+        
+        .color-option.active {
+            transform: scale(1.2);
+            border-color: #2c3e50;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider-container label {
+            min-width: 100px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 5px;
+            background: #ddd;
+            outline: none;
+            border-radius: 5px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+        
+        #clearBtn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        #saveBtn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        #clearBtn:hover {
+            background-color: #c0392b;
+        }
+        
+        #saveBtn:hover {
+            background-color: #27ae60;
+        }
+        
+        .preview {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .preview h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        #signaturePreview {
+            max-width: 100%;
+            max-height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            padding: 10px;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4fc;
+            border-radius: 10px;
+            color: #2c3e50;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .signature-area {
+                flex-direction: column;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>手写签名生成器</h1>
+        <p class="subtitle">创建您独特的数字签名</p>
+        
+        <div class="signature-area">
+            <div class="canvas-container">
+                <canvas id="signatureCanvas"></canvas>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <h3>笔刷类型</h3>
+                    <div class="brush-options">
+                        <div class="brush-option active" data-brush="round">圆头笔</div>
+                        <div class="brush-option" data-brush="square">方头笔</div>
+                        <div class="brush-option" data-brush="calligraphy">书法笔</div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>笔刷颜色</h3>
+                    <div class="color-options">
+                        <div class="color-option active" style="background-color: #000000;" data-color="#000000"></div>
+                        <div class="color-option" style="background-color: #2c3e50;" data-color="#2c3e50"></div>
+                        <div class="color-option" style="background-color: #e74c3c;" data-color="#e74c3c"></div>
+                        <div class="color-option" style="background-color: #3498db;" data-color="#3498db"></div>
+                        <div class="color-option" style="background-color: #2ecc71;" data-color="#2ecc71"></div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>笔刷设置</h3>
+                    <div class="slider-container">
+                        <label for="brushSize">笔刷大小:</label>
+                        <input type="range" id="brushSize" min="1" max="30" value="5">
+                        <span id="brushSizeValue">5</span>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="brushOpacity">不透明度:</label>
+                        <input type="range" id="brushOpacity" min="10" max="100" value="100">
+                        <span id="brushOpacityValue">100%</span>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="clearBtn">清除签名</button>
+                    <button id="saveBtn">保存签名</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview">
+            <h3>签名预览</h3>
+            <img id="signaturePreview" src="" alt="签名预览">
+        </div>
+        
+        <div class="instructions">
+            <h3>使用说明</h3>
+            <ul>
+                <li>在画布区域使用鼠标或触摸屏书写您的签名</li>
+                <li>选择不同的笔刷类型和颜色来创建独特效果</li>
+                <li>调整笔刷大小和不透明度以获得最佳效果</li>
+                <li>点击"清除签名"重新开始</li>
+                <li>点击"保存签名"将签名保存为PNG图片</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        const clearBtn = document.getElementById('clearBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const brushSizeSlider = document.getElementById('brushSize');
+        const brushOpacitySlider = document.getElementById('brushOpacity');
+        const brushSizeValue = document.getElementById('brushSizeValue');
+        const brushOpacityValue = document.getElementById('brushOpacityValue');
+        const signaturePreview = document.getElementById('signaturePreview');
+        const brushOptions = document.querySelectorAll('.brush-option');
+        const colorOptions = document.querySelectorAll('.color-option');
+        
+        // 设置Canvas尺寸
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth - 40; // 减去padding
+            canvas.height = 250;
+            
+            // 初始化画布背景
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // 初始化变量
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let currentBrush = 'round';
+        let currentColor = '#000000';
+        let brushSize = 5;
+        let brushOpacity = 1;
+        
+        // 初始化画布
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // 设置初始画布样式
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        
+        // 笔刷选项事件
+        brushOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                brushOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                currentBrush = this.getAttribute('data-brush');
+            });
+        });
+        
+        // 颜色选项事件
+        colorOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                colorOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                currentColor = this.getAttribute('data-color');
+            });
+        });
+        
+        // 笔刷大小事件
+        brushSizeSlider.addEventListener('input', function() {
+            brushSize = this.value;
+            brushSizeValue.textContent = brushSize;
+        });
+        
+        // 不透明度事件
+        brushOpacitySlider.addEventListener('input', function() {
+            brushOpacity = this.value / 100;
+            brushOpacityValue.textContent = this.value + '%';
+        });
+        
+        // 绘制函数
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            // 设置笔刷样式
+            ctx.strokeStyle = currentColor;
+            ctx.globalAlpha = brushOpacity;
+            ctx.lineWidth = brushSize;
+            
+            // 根据笔刷类型设置不同的绘制效果
+            if (currentBrush === 'square') {
+                ctx.lineCap = 'square';
+            } else if (currentBrush === 'calligraphy') {
+                // 书法笔效果 - 根据笔的方向改变宽度
+                const dx = e.offsetX - lastX;
+                const dy = e.offsetY - lastY;
+                const angle = Math.atan2(dy, dx);
+                ctx.lineWidth = brushSize * Math.abs(Math.cos(angle)) + 1;
+                ctx.lineCap = 'round';
+            } else {
+                ctx.lineCap = 'round';
+            }
+            
+            // 开始绘制路径
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+        
+        // 鼠标事件
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        });
+        
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false);
+        
+        // 触摸事件（移动设备支持）
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDrawing = true;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [touch.clientX - rect.left, touch.clientY - rect.top];
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!isDrawing) return;
+            
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            // 设置笔刷样式
+            ctx.strokeStyle = currentColor;
+            ctx.globalAlpha = brushOpacity;
+            ctx.lineWidth = brushSize;
+            ctx.lineCap = 'round';
+            
+            // 开始绘制路径
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            
+            [lastX, lastY] = [x, y];
+        });
+        
+        canvas.addEventListener('touchend', () => isDrawing = false);
+        
+        // 清除画布
+        clearBtn.addEventListener('click', function() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            signaturePreview.src = '';
+        });
+        
+        // 保存签名
+        saveBtn.addEventListener('click', function() {
+            // 更新预览
+            signaturePreview.src = canvas.toDataURL('image/png');
+            
+            // 创建下载链接
+            const link = document.createElement('a');
+            link.download = '我的签名.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    </script>
+</body>
+</html>
