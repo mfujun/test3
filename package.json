@@ -1,0 +1,15 @@
+{
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.0"
+  },
+   "scripts": {
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx}": ["eslint --fix", "prettier --write"],
+    "*.md": ["prettier --write"]
+  }
+}

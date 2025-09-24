@@ -1,0 +1,8 @@
+.project
+.DS_Store
+.hbuilderx
+src/.hbuilderx
+
+node_modules/
+unpackage/
+dist/
