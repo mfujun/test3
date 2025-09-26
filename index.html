@@ -634,7 +634,7 @@
             ctx.moveTo(x, y);
         }
         
-        // 绘制
+        // 绘制函数优化 - 使用贝塞尔曲线使线条更加平滑
         function draw(x, y) {
             if (!isDrawing) return;
             
@@ -646,16 +646,25 @@
                 ctx.lineWidth = brushSize * Math.abs(Math.cos(angle)) + 1;
             }
             
-            ctx.lineTo(x, y);
+            // 使用二次贝塞尔曲线替代直线，使线条更加平滑
+            const midX = (lastX + x) / 2;
+            const midY = (lastY + y) / 2;
+            
+            ctx.quadraticCurveTo(lastX, lastY, midX, midY);
             ctx.stroke();
             
-            [lastX, lastY] = [x, y];
+            [lastX, lastY] = [midX, midY];
         }
         
-        // 结束绘制
+        // 结束绘制函数优化
         function endDrawing() {
             if (isDrawing) {
                 isDrawing = false;
+                
+                // 完成最后一段贝塞尔曲线
+                ctx.lineTo(lastX, lastY);
+                ctx.stroke();
+                ctx.closePath();
                 
                 // 笔画结束时再次保存状态，确保完整记录
                 saveState();
